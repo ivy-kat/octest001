@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4分割テンプレート</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            font-family: sans-serif;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 50% 50%;
+            grid-template-rows: 50% 50%;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .pane {
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            overflow: auto;
+            padding: 10px;
+        }
+
+        .pane iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(4, auto);
+                /* 各行の高さは自動調整 */
+                min-height: 50vh;
+                /* ビューポート高さの50%を最低確保 */
+                height: auto;
+                /* 内容に応じて伸びる */
+            }
+        }
+
+        /* パネルごとの背景色 */
+        #top-left {
+            background-color: #fce4ec;
+        }
+
+        #top-right {
+            background-color: #e3f2fd;
+        }
+
+        #bottom-left {
+            background-color: #e8f5e9;
+        }
+
+        #bottom-right {
+            background-color: #fff3e0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="pane" id="top-left">
+            <!-- 左上 -->
+            <h2>NHKニュース（最新5件）</h2>
+            <ul id="news-list"></ul>
+
+            <script>
+                const rssUrl = "https://www3.nhk.or.jp/rss/news/cat0.xml";
+                const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        const list = document.getElementById("news-list");
+                        if (data.items && data.items.length > 0) {
+                            data.items.slice(0, 5).forEach(item => {
+                                const li = document.createElement("li");
+                                li.innerHTML = `<a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>`;
+                                list.appendChild(li);
+                            });
+                        } else {
+                            list.innerHTML = "<li>ニュースを取得できませんでした。</li>";
+                        }
+                    })
+                    .catch(error => {
+                        console.error("RSS読み込み失敗:", error);
+                        document.getElementById("news-list").innerHTML = "<li>読み込みエラー</li>";
+                    });
+            </script>
+            <!-- <h2>左上</h2>
+      <p>ここにHTMLを直接書いてもOK</p> -->
+            <!-- iframeの例 -->
+            <!-- <iframe src="your-url-1.html"></iframe> -->
+        </div>
+        <div class="pane" id="top-right">
+            <!-- 右上 -->
+            <!-- <h2>右上</h2> -->
+            <!-- 右上のコンテンツ：九州地方の天気予報 -->
+            <div style="padding: 10px; font-family: sans-serif;">
+                <h2>九州地方の天気</h2>
+                <label for="prefecture">県を選択：</label>
+                <select id="prefecture">
+                    <option value="400000">福岡県</option>
+                    <option value="410000">佐賀県</option>
+                    <option value="420000">長崎県</option>
+                    <option value="430000">熊本県</option>
+                    <option value="440000">大分県</option>
+                    <option value="450000">宮崎県</option>
+                    <option value="460100">鹿児島県</option>
+                </select>
+
+                <div id="weather" style="margin-top: 10px;">
+                    天気情報を取得中...
+                </div>
+
+                <div style="font-size: 10px; color: gray; margin-top: 20px;">
+                    天気予報データ提供：<a href="https://www.jma.go.jp/" target="_blank" rel="noopener noreferrer">気象庁</a>
+                </div>
+            </div>
+
+            <script>
+                async function loadWeather(code) {
+                    const overviewUrl = `https://www.jma.go.jp/bosai/forecast/data/overview_forecast/${code}.json`;
+                    const detailUrl = `https://www.jma.go.jp/bosai/forecast/data/forecast/${code}.json`;
+
+                    try {
+                        const [overviewRes, detailRes] = await Promise.all([
+                            fetch(overviewUrl),
+                            fetch(detailUrl)
+                        ]);
+
+                        const overview = await overviewRes.json();
+                        const detail = await detailRes.json();
+
+                        const area = detail[0].timeSeries[0].areas[0];
+                        const weatherText = detail[0].timeSeries[0].areas[0].weathers[0];
+                        const time = detail[0].reportDatetime;
+
+                        document.getElementById("weather").innerHTML = `
+                            <strong>${area.area.name}</strong><br>
+                            ${weatherText}<br>
+                            <small>発表時刻：${new Date(time).toLocaleString()}</small>
+                        `;
+                    } catch (err) {
+                        document.getElementById("weather").textContent = "天気情報の取得に失敗しました。";
+                        console.error(err);
+                    }
+                }
+
+                const selector = document.getElementById("prefecture");
+                selector.addEventListener("change", () => loadWeather(selector.value));
+
+                // 初期表示
+                loadWeather(selector.value);
+            </script>
+
+        </div>
+        <div class="pane" id="bottom-left">
+            <!-- 左下 -->
+            <!-- <h2>左下</h2> -->
+            <div id="calendar-may" style="font-family: Arial, sans-serif; width: 280px; margin: 10px;">
+                <h3 style="text-align:center;">2025年5月カレンダー</h3>
+                <table border="1" cellspacing="0" cellpadding="5"
+                    style="width:100%; border-collapse: collapse; text-align: center;">
+                    <thead>
+                        <tr>
+                            <th style="color: red;">日</th>
+                            <th>月</th>
+                            <th>火</th>
+                            <th>水</th>
+                            <th>木</th>
+                            <th>金</th>
+                            <th>土</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calendar-body-may"></tbody>
+                </table>
+            </div>
+
+            <script>
+                (function () {
+                    const year = 2025;
+                    const month = 4; // 0=1月, 4=5月
+                    const calendarBody = document.getElementById("calendar-body-may");
+
+                    // 5月の祝日と振替休日のリスト（手動追加）
+                    const holidays = {
+                        "2025-05-03": "憲法記念日",
+                        "2025-05-04": "みどりの日",
+                        "2025-05-05": "こどもの日",
+                        "2025-05-06": "振替休日"  // 5/6は2025年の振替休日（ゴールデンウィーク）
+                    };
+
+                    function isHoliday(dateStr) {
+                        return holidays.hasOwnProperty(dateStr);
+                    }
+
+                    function createCalendar() {
+                        calendarBody.innerHTML = "";
+                        const firstDay = new Date(year, month, 1);
+                        const lastDay = new Date(year, month + 1, 0);
+                        let startDay = firstDay.getDay(); // 日曜=0～土曜=6
+                        let totalDays = lastDay.getDate();
+
+                        let row = document.createElement("tr");
+                        // 空白セルを追加（日曜開始まで）
+                        for (let i = 0; i < startDay; i++) {
+                            row.appendChild(document.createElement("td"));
+                        }
+
+                        for (let day = 1; day <= totalDays; day++) {
+                            const date = new Date(year, month, day);
+                            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+                            let cell = document.createElement("td");
+                            cell.textContent = day;
+
+                            // 祝日判定
+                            if (isHoliday(dateStr)) {
+                                cell.style.color = "red";
+                                cell.title = holidays[dateStr];
+                                cell.style.fontWeight = "bold";
+                            } else if (date.getDay() === 0) {
+                                // 日曜は赤色
+                                cell.style.color = "red";
+                            } else if (date.getDay() === 6) {
+                                // 土曜は青色
+                                cell.style.color = "blue";
+                            }
+
+                            row.appendChild(cell);
+
+                            if ((startDay + day) % 7 === 0) {
+                                calendarBody.appendChild(row);
+                                row = document.createElement("tr");
+                            }
+                        }
+                        if (row.children.length > 0) {
+                            calendarBody.appendChild(row);
+                        }
+                    }
+
+                    createCalendar();
+                })();
+            </script>
+        </div>
+        <div class="pane" id="bottom-right">
+            <!-- 右下 -->
+            <div id="image-slider" style="width:320px; margin:10px; font-family: Arial, sans-serif;">
+                <h3 style="text-align:center;">画像スライダー</h3>
+                <div
+                    style="width: 300px; height: 180px; overflow: hidden; margin: 0 auto; border: 1px solid #ccc; border-radius: 8px;">
+                    <img id="slider-image" src="" alt="スライダー画像"
+                        style="width:100%; height:100%; object-fit: cover; border-radius: 8px;">
+                </div>
+            </div>
+
+            <script>
+                (function () {
+                    // 著作権問題なし（パブリックドメインやCC0）で使えるフリー画像URLの例（Pixabay）
+                    const images = [
+                        "https://cdn.pixabay.com/photo/2017/08/30/12/45/landscape-2696946_1280.jpg",
+                        "https://images.unsplash.com/photo-1747760866743-97dff7918000?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                        "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885_1280.jpg",
+                        "https://plus.unsplash.com/premium_photo-1746460541934-39eb58b64186?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                        "https://images.unsplash.com/photo-1747077138172-590c023ec442?q=80&w=1972&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    ];
+
+                    let index = 0;
+                    const imgElem = document.getElementById("slider-image");
+
+                    function showImage(i) {
+                        imgElem.src = images[i];
+                    }
+
+                    function nextImage() {
+                        index = (index + 1) % images.length;
+                        showImage(index);
+                    }
+
+                    showImage(index);
+                    setInterval(nextImage, 4000); // 4秒ごとに切り替え
+                })();
+            </script>
+        </div>
+    </div>
+</body>
+
+</html>
