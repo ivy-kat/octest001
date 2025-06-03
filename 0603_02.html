@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4分割テンプレート</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            font-family: sans-serif;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 50% 50%;
+            grid-template-rows: 50% 50%;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .pane {
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            overflow: auto;
+            padding: 10px;
+        }
+
+        .pane iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(4, auto);
+                /* 各行の高さは自動調整 */
+                min-height: 50vh;
+                /* ビューポート高さの50%を最低確保 */
+                height: auto;
+                /* 内容に応じて伸びる */
+            }
+        }
+
+        /* パネルごとの背景色 */
+        #top-left {
+            background-color: #fce4ec;
+        }
+
+        #top-right {
+            background-color: #e3f2fd;
+        }
+
+        #bottom-left {
+            background-color: #e8f5e9;
+        }
+
+        #bottom-right {
+            background-color: #fff3e0;
+        }
+    </style>
+</head>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(function () {
+        $('#add-btn').click(function () {
+            const task = $('#new-task').val().trim();
+            if (task) {
+                const newItem = $('<li>').text(task).append(
+                    $('<button>').text('削除').click(function () {
+                        $(this).parent().remove();
+                    })
+                );
+                $('#task-list').append(newItem);
+                $('#new-task').val('');
+            }
+        });
+
+        $('#new-task').keypress(function (e) {
+            if (e.which === 13) {
+                $('#add-btn').click();
+            }
+        });
+    });
+</script>
+
+<body>
+    <div class="container">
+        <div class="pane" id="top-left">
+            <!-- 左上 ここから -->
+            <div class="pane" id="top-left">
+                <h2>ToDoリスト</h2>
+                <input type="text" id="new-task" placeholder="新しいタスクを入力" />
+                <button id="add-btn">追加</button>
+                <ul id="task-list"></ul>
+            </div>
+            <!-- 左上 ここまで -->
+        </div>
+            <div class="pane" id="top-right">
+            <!-- 右上 ここから -->
+           <!-- 右上 ここから -->
+                <h2>大分県庁マップ</h2>
+                <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3325.3882456357834!2d131.6091786150953!3d33.239400080828075!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x35469ffae6f57a55%3A0x59b8704e1ab4c307!2z5aSn5a2m6YO95bqc5Zyw5a6f!5e0!3m2!1sja!2sjp!4v1717400000000"
+                width="100%"
+                height="90%"
+                style="border:0;"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+<!-- 右上 ここまで -->
+ <h2></h2>
+            <!-- 右上 ここまで -->
+        </div>
+        <div class="pane" id="bottom-left">
+            <!-- 左下 ここから -->
+           <!-- 左下 ここから -->
+<h2>青空と流れる雲</h2>
+<div id="sky-canvas"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+<script>
+  new p5((p) => {
+    let clouds = [];
+
+    p.setup = () => {
+      const canvas = p.createCanvas(p.windowWidth / 2, p.windowHeight / 2);
+      canvas.parent("sky-canvas");
+      for (let i = 0; i < 5; i++) {
+        clouds.push({
+          x: p.random(-200, p.width),
+          y: p.random(50, p.height / 2),
+          speed: p.random(0.5, 1.5)
+        });
+      }
+    };
+
+    p.draw = () => {
+      p.background(135, 206, 235); // 青空
+      p.noStroke();
+      p.fill(255);
+
+      clouds.forEach(cloud => {
+        // 雲の形（簡易な3つの楕円）
+        p.ellipse(cloud.x, cloud.y, 60, 40);
+        p.ellipse(cloud.x + 25, cloud.y + 5, 50, 30);
+        p.ellipse(cloud.x - 25, cloud.y + 5, 50, 30);
+
+        cloud.x += cloud.speed;
+        if (cloud.x > p.width + 50) cloud.x = -100;
+      });
+    };
+
+    p.windowResized = () => {
+      p.resizeCanvas(p.windowWidth / 2, p.windowHeight / 2);
+    };
+  });
+</script>
+<!-- 左下 ここまで -->
+ <h2></h2>
+            <!-- 左下 ここまで -->
+        </div>
+        <div class="pane" id="bottom-right">
+            <!-- 右下 ここから -->
+            <h2>NHKニュース</h2>
+            <ul id="news-list">読み込み中...</ul>
+
+            <script>
+            (async function () {
+                const proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www3.nhk.or.jp/rss/news/cat0.xml';
+                try {
+                const res = await fetch(proxyUrl);
+                const data = await res.json();
+                const list = document.getElementById('news-list');
+                list.innerHTML = '';
+                data.items.slice(0, 10).forEach(item => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = item.link;
+                    a.textContent = item.title;
+                    a.target = '_blank';
+                    li.appendChild(a);
+                    list.appendChild(li);
+                });
+                } catch (e) {
+                document.getElementById('news-list').innerText = '読み込みに失敗しました。';
+                console.error(e);
+                }
+            })();
+            </script>
+            <!-- 右下 ここまで -->
+        </div>
+    </div>
+</body>
+
+</html>
